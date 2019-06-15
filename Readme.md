@@ -46,14 +46,31 @@ Anti-patterns taken from [AWS Big Data Whitepaper](https://d1.awsstatic.com/whit
 
 ### [Kinesis Video Streams](https://docs.aws.amazon.com/kinesisvideostreams/latest/dg/what-is-kinesis-video.html)
 - **Service notes**
-- **Limits**
+  - > You can also send non-video time-serialized data such as audio data, thermal imagery, depth data, RADAR data, and more
+  - > Metadata can either be transient, such as to mark an event within the stream, or persistent, such as to identify fragments where a given event is taking place. A persistent metadata item remains, and is applied to each consecutive fragment, until it is canceled.
 
+#### [Kinesis Agent](https://docs.aws.amazon.com/streams/latest/dev/writing-with-agents.html)
+- stand-alone Java program, reads from config and processes files
+- can do some transformations like multiline, CSV to JSON, or Apache log to JSON
 
 ### Kinesis Libraries/Helpers
 #### [KPL](https://docs.aws.amazon.com/streams/latest/dev/developing-producers-with-kpl.html)
-- Types of aggregation:
+- [Key concepts overview](https://docs.aws.amazon.com/streams/latest/dev/kinesis-kpl-concepts.html)
+- manages retries and batching
+- types of batching:
+  - [Aggregation](https://docs.aws.amazon.com/streams/latest/dev/kinesis-kpl-concepts.html#kinesis-kpl-concepts-aggretation):
+    - many small **user** records into less **data** records
+    - decreases cost since less shards needed, also increases client PUT performance
+    - aggregated user records go to the same shard since a single data record
+    - firehose supports KPL deaggregation when fed from a kinesis data stream [link](https://docs.aws.amazon.com/streams/latest/dev/kpl-with-firehose.html)
+  - [Collection](https://docs.aws.amazon.com/streams/latest/dev/kinesis-kpl-concepts.html#kinesis-kpl-concepts-collection):
+    - wait and send multiple **data** records at the same time using `PutRecords` API rather than sending each in its own HTTP transaction
+    - increases client PUT performance since smaller number of requests
+    - records in `PutRecords` API call don't necessarily have to go to the same shard
 - [Monitoring](https://docs.aws.amazon.com/streams/latest/dev/monitoring-with-kpl.html) has metric level (`NONE`, `SUMMARY`, or `DETAILED`) and granularity level (`GLOBAL`, `STREAM`, or `SHARD`)
+- integrates with KCL to deaggregate records
 
 #### [KCL](https://docs.aws.amazon.com/streams/latest/dev/developing-consumers-with-kcl.html)
-
-#### [Kinesis Agent](https://docs.aws.amazon.com/firehose/latest/dev/writing-with-agents.html)
+- > The KCL takes care of many of the complex tasks associated with distributed computing, such as load balancing across multiple instances, responding to instance failures, checkpointing processed records, and reacting to resharding.
+- uses DynamoDB to coordinate between multiple workers for leases and checkpoints
+- can deaggregate KPL data records into user records
