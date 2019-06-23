@@ -74,3 +74,67 @@ Anti-patterns taken from [AWS Big Data Whitepaper](https://d1.awsstatic.com/whit
 - > The KCL takes care of many of the complex tasks associated with distributed computing, such as load balancing across multiple instances, responding to instance failures, checkpointing processed records, and reacting to resharding.
 - uses DynamoDB to coordinate between multiple workers for leases and checkpoints
 - can deaggregate KPL data records into user records
+
+## Data Processing
+
+## AWS ML
+- [Binary classification](https://docs.aws.amazon.com/machine-learning/latest/dg/binary-model-insights.html): uses logistic regression and Area Under the (Receiver Operating Characteristic) Curve (AUC)
+- [Multiclass classification](https://docs.aws.amazon.com/machine-learning/latest/dg/multiclass-model-insights.html): uses logistic regression and Macro Average F1 Score for accuracy metrics
+- [Linea regression](https://docs.aws.amazon.com/machine-learning/latest/dg/regression-model-insights.html): numeric output, evaluated by root mean square error (RMSE)
+
+### EMR
+- Open source components
+  - Spark
+    - Spark SQL: use SQL to process your data
+    - Spring Streaming: lets you treat streaming data as micro-batches and use the same analysis code on batch and streaming data
+    - MLlib: train machine learning models on Spark
+    - GraphX: graph queries/algorithms
+  - others...
+- [EMRFS](https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-fs.html)
+  - consistent view provides consistency checking for list and read-after-write using a DynamoDB table
+  - encrypt data with KMS on S3 (4.8.0+)
+  - map EMR users to IAM roles (5.10.0+)
+  - how to [load data into EMR](https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-plan-get-data-in.html)
+
+### [EMR Notebooks](https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-managed-notebooks.html)
+- serverless Jupyter notebook, contents stored in S3
+- [announcement](https://aws.amazon.com/about-aws/whats-new/2018/11/introducing-emr-notebooks-a-managed-analytics-environment-based-on-jupyter-notebooks/)
+> You can create multiple notebooks directly from the console. There is no software or instances to manage, and notebooks spin up instantly, you have a choice of either attaching the notebook to an existing cluster or provision a new cluster directly from the console. You can attach multiple notebooks to a single cluster, detach notebooks and re-attach them to new clusters.
+
+## Data Storage
+
+## Load Process
+On premise relational data to cloud (Redshift) you can:
+- push from on premise directly to S3 or through Firehose
+- single node pull from cloud - DMS
+- cluster pull from the cloud - Apache Sqoop
+
+### Redshift
+- distribution key styles
+  - `even`: for when a tables doesn't participlate in joins or when key vs all is not known
+  - `key`: for when you want to co-locate data across tables on join columns
+  - `all`: copy of table on every node.  This is just used for **slow moving** tables.  Small dimension tables **do not benefit** since cost of redistribution is low
+- sort key types
+  - `compound`: used in order.
+  - `interleaved`: equal weight to each column in the sort key.  More benefit to larger tables, don't go above 4 columns.  More benefit the more coluns that are used in the query.
+- Load into redshift using:
+  - S3
+  - Firehose
+  - DynamoDB
+  - EMR
+  - Data Pipeline
+
+## Visualization/Reporting
+
+### Athena
+- best practices
+  - partition data
+  - use columnar formats
+  - compression and split files into reasonalbe sizes to increase parallelism
+    - snappy: default for parquet
+    - zlib: default for orc
+    - lzo
+    - gzip: non split-able
+
+### Quicksight
+TODO fill this in
