@@ -39,6 +39,7 @@ Anti-patterns taken from [AWS Big Data Whitepaper](https://d1.awsstatic.com/whit
     - An event is emitted about once a second for sliding window and once ever time period for tumbling
   - `pump`s select from one stream and insert into the next stream
   - > You can have multiple writers insert into an in-application stream, and there can be multiple readers selected from the stream. Think of an in-application stream as implementing a publish/subscribe messaging paradigm.
+  - [Random Cut Forest](https://docs.aws.amazon.com/kinesisanalytics/latest/sqlref/sqlrf-random-cut-forest.html): takes one or more numeric columns and outputs an anomaly score using a machine learning model built during execution time
   - Window types:
     - [Stagger Windows](https://docs.aws.amazon.com/kinesisanalytics/latest/dev/stagger-window-concepts.html): A query that aggregates data using keyed time-based windows that *open as data arrives*. The keys allow for multiple overlapping windows.  Using stagger windows is a windowing method that is suited for analyzing groups of data that arrive at inconsistent times.
     - [Tumbling Windows](https://docs.aws.amazon.com/kinesisanalytics/latest/dev/tumbling-window-concepts.html): A query that aggregates data using distinct time-based windows that open and close at regular intervals.
@@ -79,6 +80,25 @@ Anti-patterns taken from [AWS Big Data Whitepaper](https://d1.awsstatic.com/whit
 - > The KCL takes care of many of the complex tasks associated with distributed computing, such as load balancing across multiple instances, responding to instance failures, checkpointing processed records, and reacting to resharding.
 - uses DynamoDB to coordinate between multiple workers for leases and checkpoints
 - can deaggregate KPL data records into user records
+- [monitoring with cloudwatch](https://docs.aws.amazon.com/streams/latest/dev/monitoring-with-kcl.html)
+  - per-application metrics, across all workers
+  - per-worker metrics, across all record processors on that worker
+  - per-shard metrics, corresponds to one record processor
+
+### Data Pipeline
+- `data node` is the logical destination, `database` is the physical connection information
+- Data Nodes (both input and output): DynamoDBDataNode, SqlDataNode, RedshiftDataNode, S3DataNode
+- Activities
+  - CopyActivity: S3 and SqlDataNodes input/output
+  - EmrActivity: runs an Amazon EMR cluster
+  - HiveActivity: runs a Hive query on an Amazon EMR cluster
+  - HiveCopyActivity: runs a Hive query on an Amazon EMR cluster with support for advanced data filtering and support for S3DataNode and DynamoDBDataNode
+  - PigActivity: runs a Pig script on an Amazon EMR cluster
+  - RedshiftCopyActivity: copies data to and from Amazon Redshift tables
+  - ShellCommandActivity: runs a custom UNIX/Linux shell command as an activity
+  - SqlActivity: runs a SQL query on a database
+- `TaskRunner`s can be either run on your long-running instances or on the EC2 or EMR that DataPipeline spins up dynamically
+- `Precondition`s can be system managed (DynamoDBDataExists, DynamoDBTableExists, S3KeyExists, S3PrefixNotEmpty) or user managed on your own compute resource (Exists, ShellCommandPrecondition)
 
 ## Data Processing
 
@@ -101,6 +121,7 @@ Anti-patterns taken from [AWS Big Data Whitepaper](https://d1.awsstatic.com/whit
   - encrypt data with KMS on S3 (4.8.0+)
   - map EMR users to IAM roles (5.10.0+)
   - how to [load data into EMR](https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-plan-get-data-in.html)
+  - can get [consistency notifications via SQS](https://docs.aws.amazon.com/emr/latest/ManagementGuide/emrfs-configure-sqs-cw.html)
 - Other storage options
   - "Ephemeral storage" is local HDFS
   - "[Local file system storage](https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-plan-storage.html)" is non HDFS instance store or EBS
@@ -127,6 +148,11 @@ Anti-patterns taken from [AWS Big Data Whitepaper](https://d1.awsstatic.com/whit
   - EMR
   - Data Pipeline
 
+### ElasticSearch Service
+- data ingestion [integration list](https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-aws-integrations.html)
+  - S3, Kinesis Data Streams, DynamoDB, CLoudWatch use Lambda code
+  - Firehose and IoT rule actions are native integrations
+
 ## Visualization/Reporting
 
 ### Athena
@@ -145,4 +171,4 @@ Anti-patterns taken from [AWS Big Data Whitepaper](https://d1.awsstatic.com/whit
 - [table join constraits](https://docs.aws.amazon.com/athena/latest/ug/access.html)
   - must come from the same SQL data source, join tables before importing if must come from different data sources
   - join interface in QuickSight works on the underlying table (no column renames, added computed fields)
-TODO fill this in
+  - refreshing [SPICE](https://docs.aws.amazon.com/quicksight/latest/user/refreshing-imported-data.html#refresh-spice-data) and [imported data](https://docs.aws.amazon.com/quicksight/latest/user/refreshing-imported-data.html)
