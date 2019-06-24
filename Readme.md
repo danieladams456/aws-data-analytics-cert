@@ -178,8 +178,24 @@ Anti-patterns taken from [AWS Big Data Whitepaper](https://d1.awsstatic.com/whit
   - [IAM access](https://docs.aws.amazon.com/athena/latest/ug/access.html)
   - supports SSE-S3, SS3-KMS, and CSE-KMS (client side)
 
-### Quicksight
-- [table join constraits](https://docs.aws.amazon.com/athena/latest/ug/access.html)
-  - must come from the same SQL data source, join tables before importing if must come from different data sources
-  - join interface in QuickSight works on the underlying table (no column renames, added computed fields)
+### QuickSight
+- Components
+  - data sources: relational, file, or 3rd party SaaS
+  - data set: identifies the specific data in a data source, [refreshing](https://docs.aws.amazon.com/quicksight/latest/user/refreshing-imported-data.html) in SPICE
+  - analysis: "container for a set of related visuals and stories", up to 20 data sets and 20 visuals
+  - visual: graphical representation of your data
+  - dashboard: read only snapshot of an analysis
+- **READ THIS!** [row level security](https://docs.aws.amazon.com/quicksight/latest/user/restrict-access-to-a-data-set-using-row-level-security.html)
+  - can be added before or after the data set is shared
+  - NULL (no value) means all values
+  - Two modes:
+    - `Grant access to data set`: no entry=denied, entry with NULL filters=see all rows
+    - `Deny access to data set`:  no entry=see all rows, entry with NULL filters=denied
+- [joining tables](https://docs.aws.amazon.com/quicksight/latest/user/joining-tables.html)
+  - must come from the **same SQL data source**, join tables before importing if must come from different data sources
+  - can't join on calculated fields
   - refreshing [SPICE](https://docs.aws.amazon.com/quicksight/latest/user/refreshing-imported-data.html#refresh-spice-data) and [imported data](https://docs.aws.amazon.com/quicksight/latest/user/refreshing-imported-data.html)
+- User Management for Enterprise edition
+  - AD via AWS Directory Service or AD Connector
+  - SAML
+- [visualization types](https://docs.aws.amazon.com/quicksight/latest/user/working-with-visual-types.html)
