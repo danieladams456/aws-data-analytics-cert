@@ -125,6 +125,8 @@ Anti-patterns taken from [AWS Big Data Whitepaper](https://d1.awsstatic.com/whit
 - Other storage options
   - "Ephemeral storage" is local HDFS
   - "[Local file system storage](https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-plan-storage.html)" is non HDFS instance store or EBS
+- [Security configuration](https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-create-security-configuration.html)
+- [Compression](https://www.cloudera.com/documentation/enterprise/5-5-x/topics/admin_data_compression_performance.html)
 
 ### [EMR Notebooks](https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-managed-notebooks.html)
 - serverless Jupyter notebook, contents stored in S3
@@ -142,11 +144,20 @@ Anti-patterns taken from [AWS Big Data Whitepaper](https://d1.awsstatic.com/whit
   - `compound`: used in order.
   - `interleaved`: equal weight to each column in the sort key.  More benefit to larger tables, don't go above 4 columns.  More benefit the more coluns that are used in the query.
 - Load into redshift using:
-  - S3
-  - Firehose
-  - DynamoDB
-  - EMR
-  - Data Pipeline
+  - Pull `COPY` initiated from within RedShift
+    - [S3](https://docs.aws.amazon.com/redshift/latest/dg/copy-parameters-data-source-s3.html): can read either from a prefix or manifest file, specify an encryption key for CSE-KMS, and copy from an S3 bucket in another region
+    - [DynamoDB](https://docs.aws.amazon.com/redshift/latest/dg/copy-parameters-data-source-dynamodb.html)
+    - [EMR](https://docs.aws.amazon.com/redshift/latest/dg/copy-parameters-data-source-emr.html): by HDFS prefix
+    - [SSH](https://docs.aws.amazon.com/redshift/latest/dg/copy-parameters-data-source-ssh.html): uses a manifest file to copy data from multiple hosts in parallel
+  - Push from external (stil uses `COPY`)
+    - Firehose
+    - Data Pipeline
+- Workload Management (WLM)
+  - [Automatic WLM](https://docs.aws.amazon.com/redshift/latest/dg/automatic-wlm.html): does it for you with one queue
+  - [Concurrency Scaling](https://docs.aws.amazon.com/redshift/latest/dg/concurrency-scaling.html): AWS adds a temporary cluster to burst when queues start getting backed up
+  - Short Query Acceleration ([SQA](https://docs.aws.amazon.com/redshift/latest/dg/wlm-short-query-acceleration.html))
+    - queries detected for SQA get moved off to the side to execute and don't take up WLM slots
+    - uses machine learning and specifies max runtime based on cluster load or can be set to static 1-20 seconds
 
 ### ElasticSearch Service
 - data ingestion [integration list](https://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-aws-integrations.html)
