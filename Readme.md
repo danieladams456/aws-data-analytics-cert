@@ -29,23 +29,28 @@ Anti-patterns taken from [AWS Big Data Whitepaper](https://d1.awsstatic.com/whit
   - max record size 1,000 KiB, throughput just soft limits
   - buffer hints:
     - S3: 1-128 MiB
-    - ElasticSearch service: 1-100 MiB
+    - ElasticSearch service (direct delivery, however can use S3 failed or all records): 1-100 MiB
     - Lambda processor: 1-3 MiB
 
 ### [Kinesis Analytics](https://docs.aws.amazon.com/kinesisanalytics/latest/dev/what-is.html)
 - **Service notes**
   - Input streams: Kinesis data streams *or Firehose*, static reference tables from S3 for joins
+  - Output streams can be written to Kinesis Data Streams, Firehose, or trigger Lambda
+    - An event is emitted about once a second for sliding window and once ever time period for tumbling
   - `pump`s select from one stream and insert into the next stream
   - > You can have multiple writers insert into an in-application stream, and there can be multiple readers selected from the stream. Think of an in-application stream as implementing a publish/subscribe messaging paradigm.
   - Window types:
-    - [Stagger Windows](https://docs.aws.amazon.com/kinesisanalytics/latest/dev/stagger-window-concepts.html): A query that aggregates data using keyed time-based windows that open as data arrives. The keys allow for multiple overlapping windows.  Using stagger windows is a windowing method that is suited for analyzing groups of data that arrive at inconsistent times.
+    - [Stagger Windows](https://docs.aws.amazon.com/kinesisanalytics/latest/dev/stagger-window-concepts.html): A query that aggregates data using keyed time-based windows that *open as data arrives*. The keys allow for multiple overlapping windows.  Using stagger windows is a windowing method that is suited for analyzing groups of data that arrive at inconsistent times.
     - [Tumbling Windows](https://docs.aws.amazon.com/kinesisanalytics/latest/dev/tumbling-window-concepts.html): A query that aggregates data using distinct time-based windows that open and close at regular intervals.
-    - [Sliding Windows](https://docs.aws.amazon.com/kinesisanalytics/latest/dev/sliding-window-concepts.html): A query that aggregates data continuously, using a fixed time or rowcount interval.
+    - [Sliding Windows](https://docs.aws.amazon.com/kinesisanalytics/latest/dev/sliding-window-concepts.html): A query that aggregates data continuously, using a fixed time or rowcount interval.  It re-evaluates the window each time a new event comes in ([blog](https://dev.to/frosnerd/window-functions-in-stream-analytics-1m6c))
 - **Limits**
   - 1 input stream, 1 reference source, 3 output streams
 
 ### [Kinesis Video Streams](https://docs.aws.amazon.com/kinesisvideostreams/latest/dg/what-is-kinesis-video.html)
 - **Service notes**
+  - [Consuming video streams](https://docs.aws.amazon.com/kinesisvideostreams/latest/dg/how-hls.html)
+    - `GetMedia` API: real time stream to build your own consumer using the [Stream Parser Library](https://docs.aws.amazon.com/kinesisvideostreams/latest/dg/parser-library.html)
+    - `HLS`: 3-5 second latency standard HTTP streaming
   - > You can also send non-video time-serialized data such as audio data, thermal imagery, depth data, RADAR data, and more
   - > Metadata can either be transient, such as to mark an event within the stream, or persistent, such as to identify fragments where a given event is taking place. A persistent metadata item remains, and is applied to each consecutive fragment, until it is canceled.
 
@@ -89,12 +94,16 @@ Anti-patterns taken from [AWS Big Data Whitepaper](https://d1.awsstatic.com/whit
     - Spring Streaming: lets you treat streaming data as micro-batches and use the same analysis code on batch and streaming data
     - MLlib: train machine learning models on Spark
     - GraphX: graph queries/algorithms
-  - others...
+  - Phoenix: SQL against HBase
+  - Sqoop: efficient loading of RDBMS to HDFS
 - [EMRFS](https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-fs.html)
   - consistent view provides consistency checking for list and read-after-write using a DynamoDB table
   - encrypt data with KMS on S3 (4.8.0+)
   - map EMR users to IAM roles (5.10.0+)
   - how to [load data into EMR](https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-plan-get-data-in.html)
+- Other storage options
+  - "Ephemeral storage" is local HDFS
+  - "[Local file system storage](https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-plan-storage.html)" is non HDFS instance store or EBS
 
 ### [EMR Notebooks](https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-managed-notebooks.html)
 - serverless Jupyter notebook, contents stored in S3
@@ -102,12 +111,6 @@ Anti-patterns taken from [AWS Big Data Whitepaper](https://d1.awsstatic.com/whit
 > You can create multiple notebooks directly from the console. There is no software or instances to manage, and notebooks spin up instantly, you have a choice of either attaching the notebook to an existing cluster or provision a new cluster directly from the console. You can attach multiple notebooks to a single cluster, detach notebooks and re-attach them to new clusters.
 
 ## Data Storage
-
-## Load Process
-On premise relational data to cloud (Redshift) you can:
-- push from on premise directly to S3 or through Firehose
-- single node pull from cloud - DMS
-- cluster pull from the cloud - Apache Sqoop
 
 ### Redshift
 - distribution key styles
@@ -135,6 +138,11 @@ On premise relational data to cloud (Redshift) you can:
     - zlib: default for orc
     - lzo
     - gzip: non split-able
+  - [IAM access](https://docs.aws.amazon.com/athena/latest/ug/access.html)
+  - supports SSE-S3, SS3-KMS, and CSE-KMS (client side)
 
 ### Quicksight
+- [table join constraits](https://docs.aws.amazon.com/athena/latest/ug/access.html)
+  - must come from the same SQL data source, join tables before importing if must come from different data sources
+  - join interface in QuickSight works on the underlying table (no column renames, added computed fields)
 TODO fill this in
