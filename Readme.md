@@ -199,3 +199,12 @@ Anti-patterns taken from [AWS Big Data Whitepaper](https://d1.awsstatic.com/whit
   - AD via AWS Directory Service or AD Connector
   - SAML
 - [visualization types](https://docs.aws.amazon.com/quicksight/latest/user/working-with-visual-types.html)
+
+
+### Resources
+I passed with with a 92%!!!  Resources used were the following:
+- [Cloud Academy Big Data Cert Prep](https://cloudacademy.com/learning-paths/big-data-specialty-certification-preparation-for-aws-36/)
+- [Udemy Big Data AWS](https://www.udemy.com/aws-big-data/)
+- [Simon Lee Medium article](https://medium.com/@simonleewm/my-path-to-aws-big-data-speciality-certification-4baff3a8150)
+- [Sergio Deras IoConnect blog post](https://www.ioconnectservices.com/articles/aws-certified-big-data-specialty-tips/)
+- AWS white papers and docs
